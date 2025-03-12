@@ -76,30 +76,30 @@ const About = () => {
             {[
               {
                 icon: <Heart size={24} />,
-                title: 'Compassion',
-                description: 'We understand the emotional attachment people have to their possessions and strive to reunite them with care.',
-                color: 'from-pink-500 to-rose-500',
+                title: "Compassion",
+                description: "We understand the emotional attachment people have to their possessions and strive to reunite them with care.",
+                color: "from-pink-500 to-rose-500",
                 delay: 0.1
               },
               {
                 icon: <Shield size={24} />,
-                title: 'Trust & Safety',
-                description: 'We prioritize user privacy and create secure channels for returning items without compromising personal information.',
-                color: 'from-blue-500 to-indigo-500',
+                title: "Trust & Safety",
+                description: "We prioritize user privacy and create secure channels for returning items without compromising personal information.",
+                color: "from-blue-500 to-indigo-500",
                 delay: 0.2
               },
               {
                 icon: <Award size={24} />,
-                title: 'Recognition',
-                description: 'We believe good deeds should be rewarded, which is why we offer incentives for those who help return lost items.',
-                color: 'from-amber-500 to-orange-500',
+                title: "Recognition",
+                description: "We believe good deeds should be rewarded, which is why we offer incentives for those who help return lost items.",
+                color: "from-amber-500 to-orange-500",
                 delay: 0.3
               },
               {
                 icon: <Users size={24} />,
-                title: 'Community',
-                description: 'We're building a global community of people who look out for each other and help reconnect lost items with their owners.',
-                color: 'from-green-500 to-emerald-500',
+                title: "Community",
+                description: "We're building a global community of people who look out for each other and help reconnect lost items with their owners.",
+                color: "from-green-500 to-emerald-500",
                 delay: 0.4
               }
             ].map((value, index) => (
@@ -139,27 +139,27 @@ const About = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {[
               {
-                name: 'Sarah Johnson',
-                role: 'Founder & CEO',
-                image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=987&q=80',
+                name: "Sarah Johnson",
+                role: "Founder & CEO",
+                image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=987&q=80",
                 delay: 0.1
               },
               {
-                name: 'David Chen',
-                role: 'CTO & AI Lead',
-                image: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=987&q=80',
+                name: "David Chen",
+                role: "CTO & AI Lead",
+                image: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=987&q=80",
                 delay: 0.2
               },
               {
-                name: 'Maya Patel',
-                role: 'Head of Operations',
-                image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=988&q=80',
+                name: "Maya Patel",
+                role: "Head of Operations",
+                image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=988&q=80",
                 delay: 0.3
               },
               {
-                name: 'James Wilson',
-                role: 'UX/UI Designer',
-                image: 'https://images.unsplash.com/photo-1603415526960-f7e0328c63b1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80',
+                name: "James Wilson",
+                role: "UX/UI Designer",
+                image: "https://images.unsplash.com/photo-1603415526960-f7e0328c63b1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80",
                 delay: 0.4
               }
             ].map((member, index) => (

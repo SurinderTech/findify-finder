@@ -1,69 +1,47 @@
-# Welcome to your Lovable project
 
-## Project info
+# Lost and Found App
 
-**URL**: https://lovable.dev/projects/4a3f4ada-aeb5-47fb-b8f3-fbe3dec653e9
+## Project setup
 
-## How can I edit this code?
+### Supabase setup
 
-There are several ways of editing your application.
+1. Create a Supabase project at [https://supabase.com](https://supabase.com)
+2. When prompted, enter a project name (e.g., "lost-and-found-app")
+3. Create a strong database password (you'll need this for database access)
+4. Choose a region closest to your users
+5. Wait for your project to be created
 
-**Use Lovable**
+### Get your Supabase credentials
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/4a3f4ada-aeb5-47fb-b8f3-fbe3dec653e9) and start prompting.
+1. Once your project is created, go to your project dashboard
+2. Click on "Settings" in the sidebar
+3. Click on "API" in the submenu
+4. You'll find your "Project URL" and "anon public" key here
+5. Copy these values to use in your .env file
 
-Changes made via Lovable will be committed automatically to this repo.
+### Configure your application
 
-**Use your preferred IDE**
+Update your `.env` file with the credentials from Supabase:
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+```
+VITE_SUPABASE_URL=your_project_url_from_supabase
+VITE_SUPABASE_ANON_KEY=your_anon_key_from_supabase
+```
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+## Development
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
+# Install dependencies
 npm i
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start the development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## Features
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+- User authentication with Supabase
+- Report lost or found items with image upload
+- Search and browse lost and found items
+- Dashboard to manage your reported items
 
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with .
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/4a3f4ada-aeb5-47fb-b8f3-fbe3dec653e9) and click on Share -> Publish.
-
-## I want to use a custom domain - is that possible?
-
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)

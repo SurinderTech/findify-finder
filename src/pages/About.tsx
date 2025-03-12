@@ -44,7 +44,7 @@ const About = () => {
               <p className="text-gray-600 mb-6">
                 This experience revealed a fundamental problem: the lack of an efficient system 
                 to connect those who lose items with those who find them. Many valuable items 
-                go unclaimed simply because there's no effective way to match them with their owners.
+                go unclaimed simply because there is no effective way to match them with their owners.
               </p>
               <p className="text-gray-600">
                 With backgrounds in AI technology and service design, our team built FindIt to 

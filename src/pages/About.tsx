@@ -139,9 +139,9 @@ const About = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {[
               {
-                name: "Sarah Johnson",
+                name: "Surinder Kumar",
                 role: "Founder & CEO",
-                image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=987&q=80",
+                image: "/lovable-uploads/4cce33c5-71c0-4e11-b7aa-393be8380865.png",
                 delay: 0.1
               },
               {

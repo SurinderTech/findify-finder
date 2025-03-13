@@ -168,11 +168,21 @@ const About = () => {
                 className="glass-card rounded-2xl overflow-hidden animate-fade-in"
                 style={{ animationDelay: `${member.delay}s` }}
               >
-                <img 
-                  src={member.image} 
-                  alt={member.name} 
-                  className="w-full h-64 object-cover object-center"
-                />
+                {member.name === "Surinder Kumar" ? (
+                  <div className="w-full h-64 relative bg-gray-100">
+                    <img 
+                      src={member.image} 
+                      alt={member.name} 
+                      className="w-full h-full object-cover object-top"
+                    />
+                  </div>
+                ) : (
+                  <img 
+                    src={member.image} 
+                    alt={member.name} 
+                    className="w-full h-64 object-cover object-center"
+                  />
+                )}
                 <div className="p-6">
                   <h3 className="font-semibold text-lg">{member.name}</h3>
                   <p className="text-gray-600">{member.role}</p>

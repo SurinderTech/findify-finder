@@ -58,16 +58,16 @@ const Footer = () => {
               <li className="flex items-start">
                 <MapPin size={18} className="text-blue-500 mr-3 mt-1 flex-shrink-0" />
                 <span className="text-gray-600">
-                  123 Innovation Way, Tech City, CA 90210
+                  Pathankot, Punjab, India
                 </span>
               </li>
               <li className="flex items-center">
                 <Phone size={18} className="text-blue-500 mr-3 flex-shrink-0" />
-                <span className="text-gray-600">+1 (555) 123-4567</span>
+                <span className="text-gray-600">+91 9797486509</span>
               </li>
               <li className="flex items-center">
                 <Mail size={18} className="text-blue-500 mr-3 flex-shrink-0" />
-                <span className="text-gray-600">contact@finditapp.com</span>
+                <span className="text-gray-600">surinderkumar3182@gmail.com</span>
               </li>
             </ul>
           </div>

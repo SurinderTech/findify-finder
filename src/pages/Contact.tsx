@@ -23,22 +23,22 @@ const Contact = () => {
     {
       icon: <Mail size={24} />,
       title: 'Email Us',
-      details: 'contact@finditapp.com',
+      details: 'surinderkumar3182@gmail.com',
       description: 'For general inquiries',
       color: 'from-blue-500 to-indigo-500'
     },
     {
       icon: <Phone size={24} />,
       title: 'Call Us',
-      details: '+1 (555) 123-4567',
-      description: 'Mon-Fri, 9am-5pm EST',
+      details: '+91 9797486509',
+      description: 'Mon-Fri, 9am-5pm IST',
       color: 'from-green-500 to-emerald-500'
     },
     {
       icon: <MapPin size={24} />,
       title: 'Visit Us',
-      details: '123 Innovation Way',
-      description: 'Tech City, CA 90210',
+      details: 'Pathankot, Punjab',
+      description: 'India',
       color: 'from-red-500 to-pink-500'
     },
     {

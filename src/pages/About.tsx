@@ -173,7 +173,8 @@ const About = () => {
                     <img 
                       src={member.image} 
                       alt={member.name} 
-                      className="w-full h-full object-cover object-top"
+                      className="w-full h-full object-cover object-center scale-110"
+                      style={{ objectPosition: "50% 15%" }}
                     />
                   </div>
                 ) : (

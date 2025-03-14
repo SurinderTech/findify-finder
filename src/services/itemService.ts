@@ -14,7 +14,32 @@ export const itemService = {
     imageFile: File
   ): Promise<Item | null> {
     try {
-      // 1. Upload the image to Supabase Storage
+      // 1. Check if the bucket exists, if not create it
+      const { data: buckets, error: bucketListError } = await supabase
+        .storage
+        .listBuckets();
+      
+      console.log("Available buckets:", buckets);
+      
+      const bucketExists = buckets?.some(bucket => bucket.name === 'item-images');
+      
+      if (!bucketExists) {
+        console.log("Creating 'item-images' bucket...");
+        const { error: createBucketError } = await supabase
+          .storage
+          .createBucket('item-images', {
+            public: true,
+            fileSizeLimit: 10485760, // 10MB limit
+          });
+        
+        if (createBucketError) {
+          console.error("Error creating bucket:", createBucketError);
+          return null;
+        }
+        console.log("Bucket 'item-images' created successfully");
+      }
+
+      // 2. Upload the image to Supabase Storage
       const fileName = `${Date.now()}-${imageFile.name}`;
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('item-images')
@@ -25,18 +50,18 @@ export const itemService = {
         return null;
       }
 
-      // 2. Get the public URL for the uploaded image
+      // 3. Get the public URL for the uploaded image
       const { data: { publicUrl } } = supabase.storage
         .from('item-images')
         .getPublicUrl(fileName);
 
-      // 3. Get the current user
+      // 4. Get the current user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         throw new Error('User not authenticated');
       }
 
-      // 4. Create the item record in the database
+      // 5. Create the item record in the database
       const { data, error } = await supabase
         .from('items')
         .insert({

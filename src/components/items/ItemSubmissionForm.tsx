@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Calendar, Clock, MapPin, Info } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -35,17 +34,33 @@ const ItemSubmissionForm: React.FC<ItemSubmissionFormProps> = ({ type }) => {
       return;
     }
 
+    if (!date) {
+      toast({
+        title: "Date required",
+        description: "Please select the date when the item was " + (type === 'lost' ? 'lost' : 'found'),
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
       const status: ItemStatus = type === 'lost' ? 'lost' : 'found';
+      
+      // Combine date and time or use just date if time is not provided
+      let dateReported = date;
+      if (time) {
+        dateReported = `${date}T${time}`;
+      }
+      
       const result = await itemService.submitItem(
         title,
         description,
         category,
         status,
         location,
-        date,
+        dateReported,
         image
       );
 

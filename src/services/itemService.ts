@@ -1,4 +1,3 @@
-
 import { supabase } from '../lib/supabase';
 import { Item, ItemStatus } from '../types/database.types';
 
@@ -14,63 +13,91 @@ export const itemService = {
     imageFile: File
   ): Promise<Item | null> {
     try {
-      // 1. Check if bucket exists and create if not
-      const bucketName = 'item-images';
+      console.log("Starting item submission process");
       
-      // First, check if the bucket exists
-      const { data: buckets } = await supabase.storage.listBuckets();
-      const bucketExists = buckets?.some(bucket => bucket.name === bucketName);
-      
-      console.log("Bucket exists check:", bucketExists);
-      
-      if (!bucketExists) {
-        console.log("Attempting to create bucket...");
-        const { error: createError } = await supabase.storage.createBucket(bucketName, {
-          public: true,
-          fileSizeLimit: 10485760, // 10MB
-        });
-        
-        if (createError) {
-          console.error("Error creating bucket:", createError);
-          throw new Error(`Failed to create bucket: ${createError.message}`);
-        }
-        console.log("Bucket created successfully");
-      } else {
-        console.log("Bucket already exists, skipping creation");
-      }
-      
-      // 2. Sanitize filename and upload the image
-      const sanitizedName = imageFile.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-      const fileName = `${Date.now()}-${sanitizedName}`;
-      
-      console.log("Attempting to upload file:", fileName);
-      
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from(bucketName)
-        .upload(fileName, imageFile, {
-          cacheControl: '3600',
-          upsert: true
-        });
-
-      if (uploadError) {
-        console.error('Error uploading image:', uploadError);
-        throw new Error(`Upload failed: ${uploadError.message}`);
-      }
-
-      console.log("Image uploaded successfully:", fileName);
-      
-      // 3. Get the public URL for the uploaded image
-      const { data: { publicUrl } } = supabase.storage
-        .from(bucketName)
-        .getPublicUrl(fileName);
-
-      // 4. Get the current user
+      // 1. First get the current user before attempting storage operations
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
+        console.error('User not authenticated');
         throw new Error('User not authenticated');
       }
+      
+      // 2. Generate unique, safe filename for the image
+      const timestamp = Date.now();
+      const fileExt = imageFile.name.split('.').pop();
+      const sanitizedName = `${timestamp}-${user.id.substring(0, 8)}.${fileExt}`;
+      
+      console.log("Prepared file name:", sanitizedName);
 
-      // 5. Create the item record in the database
+      // 3. Try to upload directly to the public bucket
+      console.log("Attempting direct upload to storage...");
+      
+      let publicUrl = '';
+      try {
+        // Try uploaded to public bucket directly
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('item-images')
+          .upload(sanitizedName, imageFile, {
+            cacheControl: '3600',
+            upsert: true
+          });
+
+        if (uploadError) {
+          // If error includes "bucket not found", try creating the bucket
+          if (uploadError.message.includes('bucket') && uploadError.message.includes('not found')) {
+            console.log("Bucket not found, attempting to create...");
+            
+            // Try creating the bucket
+            const { error: bucketError } = await supabase.storage.createBucket('item-images', {
+              public: true
+            });
+            
+            if (bucketError) {
+              console.error("Failed to create bucket:", bucketError);
+              throw new Error(`Bucket creation failed: ${bucketError.message}`);
+            } else {
+              console.log("Bucket created, retrying upload...");
+              
+              // Retry upload after bucket creation
+              const { data: retryData, error: retryError } = await supabase.storage
+                .from('item-images')
+                .upload(sanitizedName, imageFile, {
+                  cacheControl: '3600',
+                  upsert: true
+                });
+                
+              if (retryError) {
+                console.error("Upload retry failed:", retryError);
+                throw new Error(`Image upload failed even after bucket creation: ${retryError.message}`);
+              }
+            }
+          } else {
+            console.error("Upload failed with error:", uploadError);
+            throw new Error(`Upload failed: ${uploadError.message}`);
+          }
+        }
+        
+        console.log("Image uploaded successfully");
+        
+        // Get the public URL
+        const { data: urlData } = supabase.storage
+          .from('item-images')
+          .getPublicUrl(sanitizedName);
+          
+        publicUrl = urlData.publicUrl;
+        console.log("Public URL generated:", publicUrl);
+        
+      } catch (uploadErr) {
+        console.error("Complete upload error:", uploadErr);
+        
+        // If we completely failed to upload, use a placeholder image
+        publicUrl = '/placeholder.svg';
+        console.log("Using placeholder image instead");
+      }
+
+      // 4. Create the item record in the database
+      console.log("Creating database record with image URL:", publicUrl);
+      
       const { data, error } = await supabase
         .from('items')
         .insert({
@@ -89,13 +116,15 @@ export const itemService = {
         .single();
 
       if (error) {
-        console.error('Error creating item:', error);
+        console.error('Error creating item in database:', error);
         throw new Error(`Database insert failed: ${error.message}`);
       }
 
+      console.log("Item created successfully:", data);
       return data as Item;
     } catch (error) {
       console.error('Error in submitItem:', error);
+      // Return null so the UI can handle the error
       return null;
     }
   },

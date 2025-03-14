@@ -1,3 +1,4 @@
+
 import { supabase } from '../lib/supabase';
 import { Item, ItemStatus } from '../types/database.types';
 
@@ -13,50 +14,54 @@ export const itemService = {
     imageFile: File
   ): Promise<Item | null> {
     try {
-      // 1. Create bucket or ensure it exists first
-      try {
-        console.log("Attempting to create item-images bucket...");
-        const { error: createBucketError } = await supabase.storage.createBucket('item-images', {
+      // 1. Check if bucket exists and create if not
+      const bucketName = 'item-images';
+      
+      // First, check if the bucket exists
+      const { data: buckets } = await supabase.storage.listBuckets();
+      const bucketExists = buckets?.some(bucket => bucket.name === bucketName);
+      
+      console.log("Bucket exists check:", bucketExists);
+      
+      if (!bucketExists) {
+        console.log("Attempting to create bucket...");
+        const { error: createError } = await supabase.storage.createBucket(bucketName, {
           public: true,
-          fileSizeLimit: 10485760, // 10MB limit
+          fileSizeLimit: 10485760, // 10MB
         });
         
-        if (createBucketError) {
-          // If error is not "Bucket already exists", log it but continue
-          if (!createBucketError.message.includes('already exists')) {
-            console.log("Bucket creation error (continuing anyway):", createBucketError);
-          } else {
-            console.log("Bucket already exists, continuing...");
-          }
-        } else {
-          console.log("Bucket 'item-images' created successfully");
+        if (createError) {
+          console.error("Error creating bucket:", createError);
+          throw new Error(`Failed to create bucket: ${createError.message}`);
         }
-      } catch (bucketError) {
-        console.log("Trying to continue despite bucket error:", bucketError);
-        // Continue anyway, the bucket might already exist
+        console.log("Bucket created successfully");
+      } else {
+        console.log("Bucket already exists, skipping creation");
       }
-
-      // 2. Upload the image to Supabase Storage
-      console.log("Attempting to upload image:", imageFile.name);
-      const fileName = `${Date.now()}-${imageFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+      
+      // 2. Sanitize filename and upload the image
+      const sanitizedName = imageFile.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+      const fileName = `${Date.now()}-${sanitizedName}`;
+      
+      console.log("Attempting to upload file:", fileName);
       
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('item-images')
+        .from(bucketName)
         .upload(fileName, imageFile, {
           cacheControl: '3600',
-          upsert: false
+          upsert: true
         });
 
       if (uploadError) {
         console.error('Error uploading image:', uploadError);
-        return null;
+        throw new Error(`Upload failed: ${uploadError.message}`);
       }
 
       console.log("Image uploaded successfully:", fileName);
       
       // 3. Get the public URL for the uploaded image
       const { data: { publicUrl } } = supabase.storage
-        .from('item-images')
+        .from(bucketName)
         .getPublicUrl(fileName);
 
       // 4. Get the current user
@@ -85,7 +90,7 @@ export const itemService = {
 
       if (error) {
         console.error('Error creating item:', error);
-        return null;
+        throw new Error(`Database insert failed: ${error.message}`);
       }
 
       return data as Item;

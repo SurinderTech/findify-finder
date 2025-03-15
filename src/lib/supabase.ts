@@ -10,11 +10,32 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(
   supabaseUrl || 'https://your-project.supabase.co',
-  supabaseAnonKey || 'your-anon-key'
+  supabaseAnonKey || 'your-anon-key',
+  {
+    auth: {
+      autoRefreshToken: true,
+      persistSession: true
+    },
+    global: {
+      fetch: (...args) => {
+        console.log('Supabase fetch:', args[0]);
+        return fetch(...args);
+      }
+    }
+  }
 );
 
 // Helper function to get user
 export const getCurrentUser = async () => {
-  const { data: { user } } = await supabase.auth.getUser();
-  return user;
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (error) {
+      console.error('Error getting current user:', error);
+      return null;
+    }
+    return user;
+  } catch (err) {
+    console.error('Exception getting current user:', err);
+    return null;
+  }
 };

@@ -71,17 +71,13 @@ const ItemSubmissionForm: React.FC<ItemSubmissionFormProps> = ({ type }) => {
         });
         navigate('/dashboard');
       } else {
-        toast({
-          title: "Error submitting item",
-          description: "There was a problem submitting your item. Please try again.",
-          variant: "destructive",
-        });
+        throw new Error("Failed to submit item");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error submitting item:', error);
       toast({
-        title: "Error",
-        description: "An unexpected error occurred.",
+        title: "Error submitting item",
+        description: error.message || "There was a problem submitting your item. Please try again.",
         variant: "destructive",
       });
     } finally {

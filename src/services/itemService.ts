@@ -30,33 +30,11 @@ export const itemService = {
       
       console.log("Prepared file name:", fileName);
 
-      // 3. Check if bucket exists first
+      // 3. Attempt to upload the image directly
       let publicUrl = '';
       try {
-        // Check if the bucket exists
-        const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
-        
-        console.log("Available buckets:", buckets);
-        
-        // Create bucket if it doesn't exist
-        if (!buckets?.find(b => b.name === 'item-images')) {
-          console.log("Bucket 'item-images' doesn't exist, creating it...");
-          
-          const { data: newBucket, error: createError } = await supabase.storage.createBucket('item-images', {
-            public: true,
-            fileSizeLimit: 10485760 // 10MB
-          });
-          
-          if (createError) {
-            console.error("Failed to create bucket:", createError);
-            // Continue anyway - bucket might already exist but not be visible to this user
-          } else {
-            console.log("Successfully created bucket:", newBucket);
-          }
-        }
-        
-        // 4. Upload the image
-        console.log("Attempting to upload image to 'item-images' bucket...");
+        // Try to upload the file directly first
+        console.log("Attempting to upload image directly");
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('item-images')
           .upload(fileName, imageFile, {
@@ -65,29 +43,58 @@ export const itemService = {
           });
           
         if (uploadError) {
-          console.error("Upload failed:", uploadError);
-          
-          // If we failed to upload, use a placeholder image
-          publicUrl = '/placeholder.svg';
-          console.log("Using placeholder image instead");
-        } else {
-          console.log("Upload successful:", uploadData);
-          
-          // Get the public URL
-          const { data: urlData } = supabase.storage
-            .from('item-images')
-            .getPublicUrl(fileName);
+          // If error is about bucket not existing, create it
+          if (uploadError.message.includes('bucket') || uploadError.message.includes('not found')) {
+            console.log("Bucket error detected, attempting to create bucket");
             
-          publicUrl = urlData.publicUrl;
-          console.log("Generated public URL:", publicUrl);
+            // Create bucket and retry upload
+            const { error: createError } = await supabase.storage.createBucket('item-images', {
+              public: true,
+              fileSizeLimit: 10485760 // 10MB
+            });
+            
+            if (createError) {
+              console.error("Failed to create bucket:", createError);
+              throw new Error(`Failed to create bucket: ${createError.message}`);
+            }
+            
+            console.log("Bucket created, retrying upload");
+            
+            // Retry upload after bucket creation
+            const { data: retryData, error: retryError } = await supabase.storage
+              .from('item-images')
+              .upload(fileName, imageFile, {
+                cacheControl: '3600',
+                upsert: true
+              });
+              
+            if (retryError) {
+              console.error("Upload retry failed:", retryError);
+              throw new Error(`Upload retry failed: ${retryError.message}`);
+            }
+            
+            console.log("Retry upload successful");
+          } else {
+            console.error("Upload failed with non-bucket error:", uploadError);
+            throw new Error(`Upload failed: ${uploadError.message}`);
+          }
         }
+        
+        // Get the public URL regardless of which upload succeeded
+        const { data: urlData } = supabase.storage
+          .from('item-images')
+          .getPublicUrl(fileName);
+          
+        publicUrl = urlData.publicUrl;
+        console.log("Generated public URL:", publicUrl);
+        
       } catch (storageError) {
         console.error("Storage operation failed:", storageError);
         publicUrl = '/placeholder.svg';
-        console.log("Using placeholder image after storage error");
+        console.log("Using placeholder image due to storage error");
       }
 
-      // 5. Create the item record in the database
+      // 4. Create the item record in the database
       console.log("Creating database record with image URL:", publicUrl);
       
       const { data, error } = await supabase
@@ -116,7 +123,7 @@ export const itemService = {
       return data as Item;
     } catch (error) {
       console.error('Error in submitItem:', error);
-      return null;
+      throw error; // Re-throw to allow proper error handling in the UI
     }
   },
 

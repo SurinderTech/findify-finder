@@ -1,6 +1,9 @@
 
 import { supabase } from '../lib/supabase';
 import { Item, ItemStatus } from '../types/database.types';
+import { aiService } from './aiService';
+import { matchingService } from './matchingService';
+import { toast } from 'sonner';
 
 export const itemService = {
   // Submit a new lost or found item
@@ -33,8 +36,28 @@ export const itemService = {
       // 3. Attempt to upload the image directly
       let publicUrl = '';
       try {
-        // Try to upload the file directly first
-        console.log("Attempting to upload image directly");
+        // Check if bucket exists
+        const { data: buckets } = await supabase.storage.listBuckets();
+        const bucketExists = buckets?.some(bucket => bucket.name === 'item-images');
+        
+        // Create bucket if it doesn't exist
+        if (!bucketExists) {
+          console.log("Bucket doesn't exist, creating it now");
+          const { error: createError } = await supabase.storage.createBucket('item-images', {
+            public: true,
+            fileSizeLimit: 10485760 // 10MB
+          });
+          
+          if (createError) {
+            console.error("Failed to create bucket:", createError);
+            throw new Error(`Failed to create bucket: ${createError.message}`);
+          }
+          
+          console.log("Bucket created successfully");
+        }
+        
+        // Try to upload the file
+        console.log("Attempting to upload image");
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('item-images')
           .upload(fileName, imageFile, {
@@ -43,44 +66,11 @@ export const itemService = {
           });
           
         if (uploadError) {
-          // If error is about bucket not existing, create it
-          if (uploadError.message.includes('bucket') || uploadError.message.includes('not found')) {
-            console.log("Bucket error detected, attempting to create bucket");
-            
-            // Create bucket and retry upload
-            const { error: createError } = await supabase.storage.createBucket('item-images', {
-              public: true,
-              fileSizeLimit: 10485760 // 10MB
-            });
-            
-            if (createError) {
-              console.error("Failed to create bucket:", createError);
-              throw new Error(`Failed to create bucket: ${createError.message}`);
-            }
-            
-            console.log("Bucket created, retrying upload");
-            
-            // Retry upload after bucket creation
-            const { data: retryData, error: retryError } = await supabase.storage
-              .from('item-images')
-              .upload(fileName, imageFile, {
-                cacheControl: '3600',
-                upsert: true
-              });
-              
-            if (retryError) {
-              console.error("Upload retry failed:", retryError);
-              throw new Error(`Upload retry failed: ${retryError.message}`);
-            }
-            
-            console.log("Retry upload successful");
-          } else {
-            console.error("Upload failed with non-bucket error:", uploadError);
-            throw new Error(`Upload failed: ${uploadError.message}`);
-          }
+          console.error("Upload failed:", uploadError);
+          throw new Error(`Upload failed: ${uploadError.message}`);
         }
         
-        // Get the public URL regardless of which upload succeeded
+        // Get the public URL
         const { data: urlData } = supabase.storage
           .from('item-images')
           .getPublicUrl(fileName);
@@ -120,6 +110,21 @@ export const itemService = {
       }
 
       console.log("Item created successfully:", data);
+      
+      // 5. Process the image with AI to extract features
+      if (data && publicUrl !== '/placeholder.svg') {
+        console.log("Processing image for AI matching");
+        await aiService.processNewItem(data.id, publicUrl);
+        
+        // 6. Check for matches
+        console.log("Checking for potential matches");
+        const matches = await matchingService.findPotentialMatches(data.id);
+        
+        if (matches.length > 0) {
+          toast.success(`Found ${matches.length} potential matches! Check the matches page.`);
+        }
+      }
+      
       return data as Item;
     } catch (error) {
       console.error('Error in submitItem:', error);

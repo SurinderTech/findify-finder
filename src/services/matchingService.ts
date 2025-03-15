@@ -1,36 +1,101 @@
 
 import { supabase } from '../lib/supabase';
 import { Item, Match } from '../types/database.types';
+import { aiService } from './aiService';
+import { toast } from 'sonner';
 
 export const matchingService = {
   // Find potential matches for a lost item
-  async findPotentialMatches(lostItemId: string): Promise<Match[]> {
+  async findPotentialMatches(itemId: string): Promise<Match[]> {
     try {
-      // Get the lost item details
-      const { data: lostItem, error: itemError } = await supabase
+      // Get the item details
+      const { data: item, error: itemError } = await supabase
         .from('items')
         .select('*')
-        .eq('id', lostItemId)
-        .eq('status', 'lost')
+        .eq('id', itemId)
         .single();
 
-      if (itemError || !lostItem) {
-        console.error('Error fetching lost item:', itemError);
+      if (itemError || !item) {
+        console.error('Error fetching item:', itemError);
         return [];
       }
 
-      // Call the Supabase Edge Function to find matches using AI
-      // This will be implemented later
-      const { data: matches, error: matchError } = await supabase.functions.invoke('find-matches', {
-        body: { lostItemId },
-      });
-
-      if (matchError) {
-        console.error('Error finding matches:', matchError);
+      // Use AI service to find potential matches
+      console.log('Finding matches for item:', itemId);
+      const matchingItemIds = await aiService.checkForMatches(itemId);
+      
+      if (matchingItemIds.length === 0) {
+        console.log('No matching items found');
         return [];
       }
-
-      return matches as Match[];
+      
+      console.log('Found potential matches:', matchingItemIds);
+      
+      // Create match records for each potential match
+      const matches: Match[] = [];
+      
+      for (const matchingItemId of matchingItemIds) {
+        // Check if we already have this match
+        const { data: existingMatches } = await supabase
+          .from('matches')
+          .select('id')
+          .or(`lost_item_id.eq.${itemId},found_item_id.eq.${itemId}`)
+          .or(`lost_item_id.eq.${matchingItemId},found_item_id.eq.${matchingItemId}`)
+          .limit(1);
+          
+        if (existingMatches && existingMatches.length > 0) {
+          console.log('Match already exists:', existingMatches[0].id);
+          continue;
+        }
+        
+        // Get the match score using AI
+        const { data: matchItem } = await supabase
+          .from('items')
+          .select('image_url')
+          .eq('id', matchingItemId)
+          .single();
+          
+        if (!matchItem) continue;
+        
+        // Extract features for both items and calculate similarity
+        const features1 = await aiService.extractImageFeatures(item.image_url);
+        const features2 = await aiService.extractImageFeatures(matchItem.image_url);
+        
+        if (!features1 || !features2) continue;
+        
+        const similarity = aiService.calculateSimilarity(features1, features2);
+        const matchScore = Math.round(similarity * 100);
+        
+        // Create a new match record
+        const lostItemId = item.status === 'lost' ? item.id : matchingItemId;
+        const foundItemId = item.status === 'found' ? item.id : matchingItemId;
+        
+        const { data: newMatch, error: matchError } = await supabase
+          .from('matches')
+          .insert({
+            lost_item_id: lostItemId,
+            found_item_id: foundItemId,
+            match_score: matchScore,
+            status: 'pending',
+            created_at: new Date().toISOString()
+          })
+          .select()
+          .single();
+          
+        if (matchError) {
+          console.error('Error creating match record:', matchError);
+          continue;
+        }
+        
+        if (newMatch) {
+          matches.push(newMatch as Match);
+          
+          // Notify both item owners
+          toast.success(`Found a potential match with ${matchScore}% similarity!`);
+        }
+      }
+      
+      return matches;
     } catch (error) {
       console.error('Error in findPotentialMatches:', error);
       return [];

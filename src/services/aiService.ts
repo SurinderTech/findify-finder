@@ -1,4 +1,3 @@
-
 import { pipeline, env } from '@huggingface/transformers';
 import { supabase } from '../lib/supabase';
 
@@ -70,7 +69,7 @@ export const aiService = {
       
       // Run the model
       console.log('Running classification model...');
-      const result = await classifier(imageData, { topk: 10 });
+      const result = await classifier(imageData, { top_k: 10 });
       
       console.log('Classification results:', result);
       
@@ -180,6 +179,57 @@ export const aiService = {
       return matches;
     } catch (error) {
       console.error('Error finding matches:', error);
+      return [];
+    }
+  },
+  
+  // New function to automatically process and store features for a new item
+  async processNewItem(itemId: string, imageUrl: string): Promise<boolean> {
+    try {
+      console.log('Processing new item for similarity matching:', itemId);
+      // Extract features
+      const features = await this.extractImageFeatures(imageUrl);
+      
+      if (!features) {
+        console.error('Failed to extract features for item:', itemId);
+        return false;
+      }
+      
+      // Store features in database
+      const stored = await this.storeImageFeatures(itemId, features);
+      
+      if (!stored) {
+        console.error('Failed to store features for item:', itemId);
+        return false;
+      }
+      
+      console.log('Successfully processed and stored features for item:', itemId);
+      return true;
+    } catch (error) {
+      console.error('Error in processNewItem:', error);
+      return false;
+    }
+  },
+  
+  // Check for matches for a specific item
+  async checkForMatches(itemId: string): Promise<string[]> {
+    try {
+      // Get the item details
+      const { data: item, error } = await supabase
+        .from('items')
+        .select('*')
+        .eq('id', itemId)
+        .single();
+      
+      if (error || !item) {
+        console.error('Error fetching item details:', error);
+        return [];
+      }
+      
+      // Find potential matches based on the item's image
+      return await this.findPotentialMatches(item.image_url, item.status);
+    } catch (error) {
+      console.error('Error in checkForMatches:', error);
       return [];
     }
   }

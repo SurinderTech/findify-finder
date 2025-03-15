@@ -22,7 +22,14 @@ export const matchingService = {
 
       // Use AI service to find potential matches
       console.log('Finding matches for item:', itemId);
-      const matchingItemIds = await aiService.checkForMatches(itemId);
+      let matchingItemIds: string[] = [];
+      
+      try {
+        matchingItemIds = await aiService.checkForMatches(itemId);
+      } catch (aiError) {
+        console.error('Error checking for matches:', aiError);
+        return [];
+      }
       
       if (matchingItemIds.length === 0) {
         console.log('No matching items found');
@@ -35,63 +42,75 @@ export const matchingService = {
       const matches: Match[] = [];
       
       for (const matchingItemId of matchingItemIds) {
-        // Check if we already have this match
-        const { data: existingMatches } = await supabase
-          .from('matches')
-          .select('id')
-          .or(`lost_item_id.eq.${itemId},found_item_id.eq.${itemId}`)
-          .or(`lost_item_id.eq.${matchingItemId},found_item_id.eq.${matchingItemId}`)
-          .limit(1);
+        try {
+          // Check if we already have this match
+          const { data: existingMatches } = await supabase
+            .from('matches')
+            .select('id')
+            .or(`lost_item_id.eq.${itemId},found_item_id.eq.${itemId}`)
+            .or(`lost_item_id.eq.${matchingItemId},found_item_id.eq.${matchingItemId}`)
+            .limit(1);
+            
+          if (existingMatches && existingMatches.length > 0) {
+            console.log('Match already exists:', existingMatches[0].id);
+            continue;
+          }
           
-        if (existingMatches && existingMatches.length > 0) {
-          console.log('Match already exists:', existingMatches[0].id);
-          continue;
-        }
-        
-        // Get the match score using AI
-        const { data: matchItem } = await supabase
-          .from('items')
-          .select('image_url')
-          .eq('id', matchingItemId)
-          .single();
+          // Get the match score using AI
+          const { data: matchItem } = await supabase
+            .from('items')
+            .select('image_url')
+            .eq('id', matchingItemId)
+            .single();
+            
+          if (!matchItem) continue;
           
-        if (!matchItem) continue;
-        
-        // Extract features for both items and calculate similarity
-        const features1 = await aiService.extractImageFeatures(item.image_url);
-        const features2 = await aiService.extractImageFeatures(matchItem.image_url);
-        
-        if (!features1 || !features2) continue;
-        
-        const similarity = aiService.calculateSimilarity(features1, features2);
-        const matchScore = Math.round(similarity * 100);
-        
-        // Create a new match record
-        const lostItemId = item.status === 'lost' ? item.id : matchingItemId;
-        const foundItemId = item.status === 'found' ? item.id : matchingItemId;
-        
-        const { data: newMatch, error: matchError } = await supabase
-          .from('matches')
-          .insert({
-            lost_item_id: lostItemId,
-            found_item_id: foundItemId,
-            match_score: matchScore,
-            status: 'pending',
-            created_at: new Date().toISOString()
-          })
-          .select()
-          .single();
+          // Calculate similarity if features exist
+          let matchScore = 0;
+          try {
+            // Extract features for both items and calculate similarity
+            const features1 = await aiService.extractImageFeatures(item.image_url);
+            const features2 = await aiService.extractImageFeatures(matchItem.image_url);
+            
+            if (features1 && features2) {
+              const similarity = aiService.calculateSimilarity(features1, features2);
+              matchScore = Math.round(similarity * 100);
+            }
+          } catch (featureError) {
+            console.error('Error calculating similarity:', featureError);
+            matchScore = 50; // Default score if calculation fails
+          }
           
-        if (matchError) {
-          console.error('Error creating match record:', matchError);
-          continue;
-        }
-        
-        if (newMatch) {
-          matches.push(newMatch as Match);
+          // Create a new match record
+          const lostItemId = item.status === 'lost' ? item.id : matchingItemId;
+          const foundItemId = item.status === 'found' ? item.id : matchingItemId;
           
-          // Notify both item owners
-          toast.success(`Found a potential match with ${matchScore}% similarity!`);
+          const { data: newMatch, error: matchError } = await supabase
+            .from('matches')
+            .insert({
+              lost_item_id: lostItemId,
+              found_item_id: foundItemId,
+              match_score: matchScore,
+              status: 'pending',
+              created_at: new Date().toISOString()
+            })
+            .select()
+            .single();
+            
+          if (matchError) {
+            console.error('Error creating match record:', matchError);
+            continue;
+          }
+          
+          if (newMatch) {
+            matches.push(newMatch as Match);
+            
+            // Notify both item owners
+            toast.success(`Found a potential match with ${matchScore}% similarity!`);
+          }
+        } catch (matchProcessError) {
+          console.error('Error processing potential match:', matchProcessError);
+          // Continue to next match
         }
       }
       

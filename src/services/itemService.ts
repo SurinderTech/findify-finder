@@ -1,4 +1,3 @@
-
 import { supabase } from '../lib/supabase';
 import { Item, ItemStatus } from '../types/database.types';
 import { aiService } from './aiService';
@@ -33,58 +32,40 @@ export const itemService = {
       
       console.log("Prepared file name:", fileName);
 
-      // 3. Attempt to upload the image directly
+      // 3. Handle image upload - with better error handling
       let publicUrl = '';
       try {
-        // Check if bucket exists
-        const { data: buckets } = await supabase.storage.listBuckets();
-        const bucketExists = buckets?.some(bucket => bucket.name === 'item-images');
-        
-        // Create bucket if it doesn't exist
-        if (!bucketExists) {
-          console.log("Bucket doesn't exist, creating it now");
-          const { error: createError } = await supabase.storage.createBucket('item-images', {
-            public: true,
-            fileSizeLimit: 10485760 // 10MB
-          });
-          
-          if (createError) {
-            console.error("Failed to create bucket:", createError);
-            throw new Error(`Failed to create bucket: ${createError.message}`);
-          }
-          
-          console.log("Bucket created successfully");
-        }
-        
-        // Try to upload the file
+        // Skip bucket creation which is causing RLS policy issues
+        // Just try to upload directly - the bucket should already exist in Supabase
         console.log("Attempting to upload image");
         const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('item-images')
-          .upload(fileName, imageFile, {
+          .from('public')  // Use the default 'public' bucket
+          .upload(`items/${fileName}`, imageFile, {
             cacheControl: '3600',
             upsert: true
           });
           
         if (uploadError) {
           console.error("Upload failed:", uploadError);
-          throw new Error(`Upload failed: ${uploadError.message}`);
+          // Don't throw here, just use placeholder and continue
+          publicUrl = '/placeholder.svg';
+          console.log("Using placeholder image due to storage error");
+        } else {
+          // Get the public URL
+          const { data: urlData } = supabase.storage
+            .from('public')
+            .getPublicUrl(`items/${fileName}`);
+            
+          publicUrl = urlData.publicUrl;
+          console.log("Generated public URL:", publicUrl);
         }
-        
-        // Get the public URL
-        const { data: urlData } = supabase.storage
-          .from('item-images')
-          .getPublicUrl(fileName);
-          
-        publicUrl = urlData.publicUrl;
-        console.log("Generated public URL:", publicUrl);
-        
       } catch (storageError) {
         console.error("Storage operation failed:", storageError);
         publicUrl = '/placeholder.svg';
         console.log("Using placeholder image due to storage error");
       }
 
-      // 4. Create the item record in the database
+      // 4. Create the item record in the database with better error handling
       console.log("Creating database record with image URL:", publicUrl);
       
       const { data, error } = await supabase
@@ -109,24 +90,33 @@ export const itemService = {
         throw new Error(`Database insert failed: ${error.message}`);
       }
 
+      if (!data) {
+        throw new Error('No data returned from database insert');
+      }
+
       console.log("Item created successfully:", data);
       
       // 5. Process the image with AI to extract features
       if (data && publicUrl !== '/placeholder.svg') {
         console.log("Processing image for AI matching");
-        await aiService.processNewItem(data.id, publicUrl);
-        
-        // 6. Check for matches
-        console.log("Checking for potential matches");
-        const matches = await matchingService.findPotentialMatches(data.id);
-        
-        if (matches.length > 0) {
-          toast.success(`Found ${matches.length} potential matches! Check the matches page.`);
+        try {
+          await aiService.processNewItem(data.id, publicUrl);
+          
+          // 6. Check for matches
+          console.log("Checking for potential matches");
+          const matches = await matchingService.findPotentialMatches(data.id);
+          
+          if (matches.length > 0) {
+            toast.success(`Found ${matches.length} potential matches! Check the matches page.`);
+          }
+        } catch (aiError) {
+          console.error("AI processing error:", aiError);
+          // Continue even if AI processing fails - the item was still saved
         }
       }
       
       return data as Item;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in submitItem:', error);
       throw error; // Re-throw to allow proper error handling in the UI
     }

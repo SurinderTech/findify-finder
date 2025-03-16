@@ -35,16 +35,37 @@ export const itemService = {
       
       console.log("Prepared file name:", fileName);
 
-      // 3. Handle image upload - using placeholder for now
-      let publicUrl = '/placeholder.svg';
+      // 3. Upload the image to Supabase Storage
+      console.log("Uploading image to storage...");
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('items')
+        .upload(`${user.id}/${fileName}`, imageFile);
+        
+      if (uploadError) {
+        console.error('Error uploading image:', uploadError);
+        
+        // Check if the error is due to missing bucket
+        if (uploadError.message.includes('bucket')) {
+          toast.error("Storage bucket 'items' doesn't exist. Please create it in your Supabase dashboard.");
+          throw new Error("The 'items' storage bucket doesn't exist. Please create it in your Supabase dashboard.");
+        }
+        
+        throw new Error(`Image upload failed: ${uploadError.message}`);
+      }
       
-      // 4. Create the item record in the database
+      // 4. Get the public URL for the uploaded image
+      const { data: publicUrlData } = supabase.storage
+        .from('items')
+        .getPublicUrl(`${user.id}/${fileName}`);
+        
+      const publicUrl = publicUrlData.publicUrl;
+      console.log("Image uploaded, public URL:", publicUrl);
+      
+      // 5. Create the item record in the database
       console.log("Creating database record with image URL:", publicUrl);
       
-      // First, check if the items table exists before attempting insertion
       try {
-        // Create an entry with more debugging information to help diagnose the issue
-        console.log("Checking if items table exists and attempting to create record");
+        console.log("Attempting to create record in 'items' table");
         
         // Log all fields being submitted for debugging
         console.log("Full item data being inserted:", {
@@ -97,6 +118,22 @@ export const itemService = {
         }
 
         console.log("Item created successfully:", data);
+        
+        // 6. Process the image with AI for matching (in background)
+        try {
+          console.log("Starting AI processing for image matching...");
+          aiService.processNewItem(data.id, publicUrl)
+            .then(success => {
+              console.log(`AI processing ${success ? 'completed successfully' : 'failed'}`);
+            })
+            .catch(aiError => {
+              console.error('Error in AI processing:', aiError);
+            });
+        } catch (aiError) {
+          // Don't fail the whole operation if AI processing fails
+          console.error('Error starting AI processing:', aiError);
+        }
+        
         return data as Item;
         
       } catch (dbError: any) {

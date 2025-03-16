@@ -30,11 +30,44 @@ export const supabase = createClient(
 // Test connection on initialization
 (async () => {
   try {
-    const { data, error } = await supabase.from('items').select('count', { count: 'exact', head: true });
+    // Let's verify the connection and check if the 'items' table exists
+    const { data, error } = await supabase.rpc('get_schema_info');
+    
     if (error) {
       console.error('Supabase connection test failed:', error);
+      
+      // Let's try a simpler check just to see if we can connect
+      const { error: basicError } = await supabase.from('items').select('count', { count: 'exact', head: true });
+      if (basicError) {
+        console.error('Basic connection test failed:', basicError);
+        
+        // Specifically test for table existence
+        if (basicError.message.includes('relation "items" does not exist')) {
+          console.error('ERROR: "items" table does not exist in the database!');
+          console.error('Please create the "items" table in your Supabase database with these columns:');
+          console.error('- id (uuid, primary key)');
+          console.error('- user_id (uuid, foreign key to auth.users)');
+          console.error('- title (text)');
+          console.error('- description (text)');
+          console.error('- category (text)');
+          console.error('- status (text, either "lost" or "found")');
+          console.error('- location (text)');
+          console.error('- date_reported (timestamp)');
+          console.error('- image_url (text)');
+          console.error('- created_at (timestamp)');
+          console.error('- updated_at (timestamp)');
+        }
+      } else {
+        console.log('Basic connection successful, but schema check failed');
+      }
     } else {
       console.log('Supabase connection successful');
+      const tables = data.map((row: any) => row.table_name);
+      console.log('Available tables:', tables);
+      
+      if (!tables.includes('items')) {
+        console.error('ERROR: "items" table does not exist in the database!');
+      }
     }
   } catch (err) {
     console.error('Error testing Supabase connection:', err);

@@ -1,4 +1,3 @@
-
 import { supabase } from '../lib/supabase';
 import { Item, ItemStatus } from '../types/database.types';
 import { aiService } from './aiService';
@@ -38,58 +37,45 @@ export const itemService = {
       // 3. Handle image upload - with better error handling
       let publicUrl = '';
       try {
-        // First check if storage bucket exists
-        console.log("Checking storage bucket status");
-        const { data: bucketData, error: bucketError } = await supabase.storage
-          .getBucket('public');
-        
-        if (bucketError) {
-          console.log("Storage bucket check error:", bucketError);
-          // Bucket might not exist yet, try to create it if we have permissions
-          const { error: createBucketError } = await supabase.storage
-            .createBucket('public', { public: true });
-            
-          if (createBucketError) {
-            console.error("Could not create bucket:", createBucketError);
-          } else {
-            console.log("Created public bucket successfully");
-          }
-        } else {
-          console.log("Public bucket exists:", bucketData);
-        }
-        
-        // Now try to upload
-        console.log("Attempting to upload image");
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('public')  // Use the default 'public' bucket
-          .upload(`items/${fileName}`, imageFile, {
-            cacheControl: '3600',
-            upsert: true
-          });
-          
-        if (uploadError) {
-          console.error("Upload failed:", uploadError);
-          // Don't throw here, just use placeholder and continue
-          publicUrl = '/placeholder.svg';
-          console.log("Using placeholder image due to storage error");
-        } else {
-          // Get the public URL
-          const { data: urlData } = supabase.storage
-            .from('public')
-            .getPublicUrl(`items/${fileName}`);
-            
-          publicUrl = urlData.publicUrl;
-          console.log("Generated public URL:", publicUrl);
-        }
+        console.log("Using placeholder image for now to troubleshoot DB issues");
+        publicUrl = '/placeholder.svg';
       } catch (storageError) {
         console.error("Storage operation failed:", storageError);
         publicUrl = '/placeholder.svg';
-        console.log("Using placeholder image due to storage error");
       }
 
       // 4. Create the item record in the database with better error handling
       console.log("Creating database record with image URL:", publicUrl);
+      console.log("Database insert data:", {
+        user_id: user.id,
+        title,
+        description,
+        category,
+        status,
+        location,
+        date_reported,
+        image_url: publicUrl
+      });
       
+      // Check if the items table exists first
+      try {
+        // Test query to see if the table exists
+        const { error: testError } = await supabase
+          .from('items')
+          .select('count', { count: 'exact', head: true });
+        
+        if (testError) {
+          console.error('Test query failed - items table may not exist:', testError);
+          throw new Error(`Items table may not exist: ${testError.message}`);
+        }
+        
+        console.log('Items table exists, proceeding with insert');
+      } catch (testErr) {
+        console.error('Error testing items table:', testErr);
+        throw new Error('Failed to verify items table existence');
+      }
+      
+      // Now try the actual insert
       const { data, error } = await supabase
         .from('items')
         .insert({
@@ -109,9 +95,8 @@ export const itemService = {
 
       if (error) {
         console.error('Error creating item in database:', error);
-        // Log more details about the error for debugging
-        console.error('Error details:', JSON.stringify(error, null, 2));
-        throw new Error(`Database insert failed: ${error.message}`);
+        console.error('Full error object:', JSON.stringify(error, null, 2));
+        throw new Error(`Database insert failed: ${error.message || 'Unknown error'}`);
       }
 
       if (!data) {
@@ -121,25 +106,7 @@ export const itemService = {
 
       console.log("Item created successfully:", data);
       
-      // 5. Process the image with AI to extract features
-      if (data && publicUrl !== '/placeholder.svg') {
-        console.log("Processing image for AI matching");
-        try {
-          await aiService.processNewItem(data.id, publicUrl);
-          
-          // 6. Check for matches
-          console.log("Checking for potential matches");
-          const matches = await matchingService.findPotentialMatches(data.id);
-          
-          if (matches.length > 0) {
-            toast.success(`Found ${matches.length} potential matches! Check the matches page.`);
-          }
-        } catch (aiError) {
-          console.error("AI processing error:", aiError);
-          // Continue even if AI processing fails - the item was still saved
-        }
-      }
-      
+      // For now, skip AI processing while we debug the database issue
       return data as Item;
     } catch (error: any) {
       console.error('Error in submitItem:', error);

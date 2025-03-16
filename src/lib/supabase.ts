@@ -30,45 +30,75 @@ export const supabase = createClient(
 // Test connection on initialization
 (async () => {
   try {
-    // Let's verify the connection and check if the 'items' table exists
-    const { data, error } = await supabase.rpc('get_schema_info');
+    console.log('Testing Supabase connection and database setup...');
     
-    if (error) {
-      console.error('Supabase connection test failed:', error);
+    // Let's verify the connection with a direct query to check if the 'items' table exists
+    const { error: itemsTableError } = await supabase
+      .from('items')
+      .select('count', { count: 'exact', head: true });
+    
+    if (itemsTableError) {
+      console.error('Error checking items table:', itemsTableError);
       
-      // Let's try a simpler check just to see if we can connect
-      const { error: basicError } = await supabase.from('items').select('count', { count: 'exact', head: true });
-      if (basicError) {
-        console.error('Basic connection test failed:', basicError);
+      if (itemsTableError.message.includes('relation "items" does not exist')) {
+        console.error('=====================================================');
+        console.error('IMPORTANT: The "items" table does not exist in your Supabase database!');
+        console.error('=====================================================');
+        console.error('Please create the "items" table in your Supabase dashboard with these columns:');
+        console.error('- id (uuid, primary key)');
+        console.error('- user_id (uuid, foreign key to auth.users)');
+        console.error('- title (text)');
+        console.error('- description (text)');
+        console.error('- category (text)');
+        console.error('- status (text, either "lost" or "found")');
+        console.error('- location (text)');
+        console.error('- date_reported (timestamp)');
+        console.error('- image_url (text)');
+        console.error('- created_at (timestamp)');
+        console.error('- updated_at (timestamp)');
+        console.error('=====================================================');
         
-        // Specifically test for table existence
-        if (basicError.message.includes('relation "items" does not exist')) {
-          console.error('ERROR: "items" table does not exist in the database!');
-          console.error('Please create the "items" table in your Supabase database with these columns:');
-          console.error('- id (uuid, primary key)');
-          console.error('- user_id (uuid, foreign key to auth.users)');
-          console.error('- title (text)');
-          console.error('- description (text)');
-          console.error('- category (text)');
-          console.error('- status (text, either "lost" or "found")');
-          console.error('- location (text)');
-          console.error('- date_reported (timestamp)');
-          console.error('- image_url (text)');
-          console.error('- created_at (timestamp)');
-          console.error('- updated_at (timestamp)');
+        // Let's also check what tables do exist to provide helpful information
+        try {
+          const { data, error } = await supabase.rpc('get_schema_info');
+          if (error) {
+            console.log('Unable to list existing tables using RPC');
+            
+            // Try a different approach to list tables
+            const { data: tables, error: tablesError } = await supabase
+              .from('pg_tables')
+              .select('tablename')
+              .eq('schemaname', 'public');
+              
+            if (tablesError) {
+              console.log('Unable to list existing tables through direct query');
+            } else if (tables) {
+              console.log('Available tables:', tables.map((t: any) => t.tablename));
+            }
+          } else {
+            console.log('Available tables:', data);
+          }
+        } catch (e) {
+          console.error('Error trying to list tables:', e);
         }
-      } else {
-        console.log('Basic connection successful, but schema check failed');
       }
     } else {
-      console.log('Supabase connection successful');
-      const tables = data.map((row: any) => row.table_name);
-      console.log('Available tables:', tables);
-      
-      if (!tables.includes('items')) {
-        console.error('ERROR: "items" table does not exist in the database!');
+      console.log('✅ "items" table exists in the database');
+    }
+    
+    // Let's also verify auth is working correctly
+    const { data: authData, error: authError } = await supabase.auth.getSession();
+    if (authError) {
+      console.error('Auth system error:', authError);
+    } else {
+      console.log('Auth system is working correctly');
+      if (authData.session) {
+        console.log('User is authenticated');
+      } else {
+        console.log('No active session (user not logged in)');
       }
     }
+    
   } catch (err) {
     console.error('Error testing Supabase connection:', err);
   }

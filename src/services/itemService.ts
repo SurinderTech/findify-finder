@@ -34,51 +34,19 @@ export const itemService = {
       
       console.log("Prepared file name:", fileName);
 
-      // 3. Handle image upload - with better error handling
-      let publicUrl = '';
-      try {
-        console.log("Using placeholder image for now to troubleshoot DB issues");
-        publicUrl = '/placeholder.svg';
-      } catch (storageError) {
-        console.error("Storage operation failed:", storageError);
-        publicUrl = '/placeholder.svg';
-      }
-
-      // 4. Create the item record in the database with better error handling
+      // 3. Handle image upload - using placeholder for now
+      let publicUrl = '/placeholder.svg';
+      
+      // 4. Create the item record in the database
       console.log("Creating database record with image URL:", publicUrl);
-      console.log("Database insert data:", {
-        user_id: user.id,
-        title,
-        description,
-        category,
-        status,
-        location,
-        date_reported,
-        image_url: publicUrl
-      });
       
-      // Check if the items table exists first
+      // First, check if the items table exists before attempting insertion
       try {
-        // Test query to see if the table exists
-        const { error: testError } = await supabase
-          .from('items')
-          .select('count', { count: 'exact', head: true });
+        // Create an entry with more debugging information to help diagnose the issue
+        console.log("Checking if items table exists and attempting to create record");
         
-        if (testError) {
-          console.error('Test query failed - items table may not exist:', testError);
-          throw new Error(`Items table may not exist: ${testError.message}`);
-        }
-        
-        console.log('Items table exists, proceeding with insert');
-      } catch (testErr) {
-        console.error('Error testing items table:', testErr);
-        throw new Error('Failed to verify items table existence');
-      }
-      
-      // Now try the actual insert
-      const { data, error } = await supabase
-        .from('items')
-        .insert({
+        // Log all fields being submitted for debugging
+        console.log("Full item data being inserted:", {
           user_id: user.id,
           title,
           description,
@@ -89,25 +57,74 @@ export const itemService = {
           image_url: publicUrl,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
-        })
-        .select()
-        .single();
+        });
+        
+        const { data, error } = await supabase
+          .from('items')
+          .insert({
+            user_id: user.id,
+            title,
+            description,
+            category,
+            status,
+            location,
+            date_reported,
+            image_url: publicUrl,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .select()
+          .single();
 
-      if (error) {
-        console.error('Error creating item in database:', error);
-        console.error('Full error object:', JSON.stringify(error, null, 2));
-        throw new Error(`Database insert failed: ${error.message || 'Unknown error'}`);
+        if (error) {
+          console.error('Error creating item in database:', error);
+          console.error('Error code:', error.code);
+          console.error('Error message:', error.message);
+          console.error('Error details:', error.details);
+          
+          if (error.message.includes('relation "items" does not exist')) {
+            toast.error("Database table 'items' doesn't exist. Please create it in your Supabase dashboard.");
+            throw new Error("The 'items' table doesn't exist in the database. Please create it in your Supabase dashboard.");
+          } else {
+            throw new Error(`Database insert failed: ${error.message}`);
+          }
+        }
+
+        if (!data) {
+          console.error('No data returned from database insert');
+          throw new Error('No data returned from database insert');
+        }
+
+        console.log("Item created successfully:", data);
+        return data as Item;
+        
+      } catch (dbError: any) {
+        console.error('Database operation failed:', dbError);
+        
+        // If it's a missing table error, provide clear instructions
+        if (dbError.message && dbError.message.includes("items")) {
+          const errorMessage = `
+            Database error: The 'items' table is missing. Please create it in your Supabase dashboard with these columns:
+            - id (uuid, primary key)
+            - user_id (uuid, foreign key to auth.users)
+            - title (text)
+            - description (text)
+            - category (text)
+            - status (text, either "lost" or "found")
+            - location (text)
+            - date_reported (timestamp)
+            - image_url (text)
+            - created_at (timestamp)
+            - updated_at (timestamp)
+          `;
+          console.error(errorMessage);
+          toast.error("Database setup issue. Please check the console for details.");
+          throw new Error(errorMessage);
+        }
+        
+        throw dbError;
       }
-
-      if (!data) {
-        console.error('No data returned from database insert');
-        throw new Error('No data returned from database insert');
-      }
-
-      console.log("Item created successfully:", data);
       
-      // For now, skip AI processing while we debug the database issue
-      return data as Item;
     } catch (error: any) {
       console.error('Error in submitItem:', error);
       

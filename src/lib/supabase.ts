@@ -8,6 +8,8 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.error('Missing Supabase environment variables. Please check your .env file.');
 }
 
+console.log('Initializing Supabase client with URL:', supabaseUrl);
+
 export const supabase = createClient(
   supabaseUrl || 'https://your-project.supabase.co',
   supabaseAnonKey || 'your-anon-key',
@@ -24,6 +26,20 @@ export const supabase = createClient(
     }
   }
 );
+
+// Test connection on initialization
+(async () => {
+  try {
+    const { data, error } = await supabase.from('items').select('count', { count: 'exact', head: true });
+    if (error) {
+      console.error('Supabase connection test failed:', error);
+    } else {
+      console.log('Supabase connection successful');
+    }
+  } catch (err) {
+    console.error('Error testing Supabase connection:', err);
+  }
+})();
 
 // Helper function to get user
 export const getCurrentUser = async () => {

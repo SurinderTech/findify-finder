@@ -1,3 +1,4 @@
+
 import { supabase } from '../lib/supabase';
 import { Item, ItemStatus } from '../types/database.types';
 import { aiService } from './aiService';
@@ -19,11 +20,13 @@ export const itemService = {
       console.log("Starting item submission process");
       
       // 1. First get the current user before attempting storage operations
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        console.error('User not authenticated');
-        throw new Error('User not authenticated');
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        console.error('User authentication error:', userError);
+        throw new Error(userError ? userError.message : 'User not authenticated');
       }
+      
+      console.log("Authenticated user ID:", user.id);
       
       // 2. Generate simple filename for the image to avoid potential issues
       const timestamp = Date.now();
@@ -35,8 +38,27 @@ export const itemService = {
       // 3. Handle image upload - with better error handling
       let publicUrl = '';
       try {
-        // Skip bucket creation which is causing RLS policy issues
-        // Just try to upload directly - the bucket should already exist in Supabase
+        // First check if storage bucket exists
+        console.log("Checking storage bucket status");
+        const { data: bucketData, error: bucketError } = await supabase.storage
+          .getBucket('public');
+        
+        if (bucketError) {
+          console.log("Storage bucket check error:", bucketError);
+          // Bucket might not exist yet, try to create it if we have permissions
+          const { error: createBucketError } = await supabase.storage
+            .createBucket('public', { public: true });
+            
+          if (createBucketError) {
+            console.error("Could not create bucket:", createBucketError);
+          } else {
+            console.log("Created public bucket successfully");
+          }
+        } else {
+          console.log("Public bucket exists:", bucketData);
+        }
+        
+        // Now try to upload
         console.log("Attempting to upload image");
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('public')  // Use the default 'public' bucket
@@ -87,10 +109,13 @@ export const itemService = {
 
       if (error) {
         console.error('Error creating item in database:', error);
+        // Log more details about the error for debugging
+        console.error('Error details:', JSON.stringify(error, null, 2));
         throw new Error(`Database insert failed: ${error.message}`);
       }
 
       if (!data) {
+        console.error('No data returned from database insert');
         throw new Error('No data returned from database insert');
       }
 
@@ -118,6 +143,17 @@ export const itemService = {
       return data as Item;
     } catch (error: any) {
       console.error('Error in submitItem:', error);
+      
+      // Log detailed information about the error
+      if (error instanceof Error) {
+        console.error('Error name:', error.name);
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+      } else {
+        console.error('Unknown error type:', typeof error);
+        console.error('Error stringified:', JSON.stringify(error, null, 2));
+      }
+      
       throw error; // Re-throw to allow proper error handling in the UI
     }
   },

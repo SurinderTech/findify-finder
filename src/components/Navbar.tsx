@@ -1,12 +1,14 @@
-
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
+import { NotificationCenter } from './notifications/NotificationCenter';
+import { useAuth } from '../contexts/AuthContext';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
+  const { user } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -24,7 +26,6 @@ const Navbar = () => {
   }, []);
 
   useEffect(() => {
-    // Close mobile menu when route changes
     setIsOpen(false);
   }, [location]);
 
@@ -74,16 +75,21 @@ const Navbar = () => {
           >
             Report Lost Item
           </Link>
+          
+          {user && <NotificationCenter />}
         </nav>
 
         {/* Mobile Menu Button */}
-        <button
-          className="md:hidden text-gray-700"
-          onClick={() => setIsOpen(!isOpen)}
-          aria-label="Toggle menu"
-        >
-          {isOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
+        <div className="md:hidden flex items-center gap-2">
+          {user && <NotificationCenter />}
+          <button
+            className="text-gray-700"
+            onClick={() => setIsOpen(!isOpen)}
+            aria-label="Toggle menu"
+          >
+            {isOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile Navigation */}

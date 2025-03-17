@@ -13,6 +13,7 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import SubmitLostItem from './pages/SubmitLostItem';
 import SubmitFoundItem from './pages/SubmitFoundItem';
+import Notifications from './pages/Notifications';
 import { Toaster } from './components/ui/toaster';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 
@@ -38,6 +39,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/notifications"
+              element={
+                <ProtectedRoute>
+                  <Notifications />
                 </ProtectedRoute>
               }
             />

@@ -5,7 +5,7 @@ import { Item } from '../types/database.types';
 import { itemService } from '../services/itemService';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
-import { Eye, Search, Plus } from 'lucide-react';
+import { Eye, Search, Plus, Bell } from 'lucide-react';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -51,7 +51,7 @@ const Dashboard = () => {
     <div className="container px-4 mx-auto py-12">
       <h1 className="text-3xl font-bold mb-8">Your Dashboard</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Submit buttons */}
         <div className="glass-card rounded-xl p-6">
           <h2 className="text-xl font-semibold mb-4">Submit an Item</h2>
@@ -85,6 +85,21 @@ const Dashboard = () => {
           >
             <Search size={20} className="mr-2" />
             Search Items
+          </button>
+        </div>
+
+        {/* Notifications section */}
+        <div className="glass-card rounded-xl p-6">
+          <h2 className="text-xl font-semibold mb-4">Notifications</h2>
+          <p className="text-gray-600 mb-4">
+            Check your notifications for potential matches and updates.
+          </p>
+          <button
+            onClick={() => navigate('/notifications')}
+            className="flex items-center justify-center w-full py-3 px-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-md hover:from-purple-700 hover:to-pink-700 transition-colors"
+          >
+            <Bell size={20} className="mr-2" />
+            View Notifications
           </button>
         </div>
       </div>

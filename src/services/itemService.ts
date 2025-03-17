@@ -125,6 +125,26 @@ export const itemService = {
           aiService.processNewItem(data.id, publicUrl)
             .then(success => {
               console.log(`AI processing ${success ? 'completed successfully' : 'failed'}`);
+              
+              // If it's a successful processing, check for matches immediately
+              if (success) {
+                // Find potential matches for the newly submitted item
+                matchingService.findPotentialMatches(data.id)
+                  .then(matches => {
+                    if (matches.length > 0) {
+                      console.log(`Found ${matches.length} potential matches for item ${data.id}`);
+                      toast.success(`Found ${matches.length} potential matches!`, {
+                        description: "We'll notify you with more details soon.",
+                        duration: 5000,
+                      });
+                    } else {
+                      console.log(`No matches found for item ${data.id}`);
+                    }
+                  })
+                  .catch(matchError => {
+                    console.error('Error finding matches:', matchError);
+                  });
+              }
             })
             .catch(aiError => {
               console.error('Error in AI processing:', aiError);

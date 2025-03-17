@@ -1,8 +1,8 @@
-
 import { supabase } from '../lib/supabase';
 import { Item, ItemStatus } from '../types/database.types';
 import { aiService } from './aiService';
 import { matchingService } from './matchingService';
+import { notificationService } from './notificationService';
 import { toast } from 'sonner';
 
 export const itemService = {
@@ -118,6 +118,17 @@ export const itemService = {
         }
 
         console.log("Item created successfully:", data);
+        
+        // Create a notification for the user about their submission
+        const submissionTitle = `Your ${status} item report submitted`;
+        const submissionMessage = `Thank you for submitting your ${status} item "${title}". We'll notify you of any potential matches.`;
+        
+        await notificationService.createNotification(
+          user.id,
+          submissionTitle,
+          submissionMessage,
+          data.id
+        );
         
         // 6. Process the image with AI for matching (in background)
         try {

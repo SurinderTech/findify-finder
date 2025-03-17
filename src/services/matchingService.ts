@@ -2,6 +2,7 @@
 import { supabase } from '../lib/supabase';
 import { Item } from '../types/database.types';
 import { notificationService } from './notificationService';
+import { aiService } from './aiService';
 
 export const matchingService = {
   // Find potential matches for an item
@@ -37,11 +38,46 @@ export const matchingService = {
 
       const potentialMatches = matches as Item[];
       
+      // If we have matches by location, now try to match by image similarity using AI
       if (potentialMatches.length > 0) {
-        console.log(`Found ${potentialMatches.length} potential matches for item ${itemId}`);
+        console.log(`Found ${potentialMatches.length} location-based matches for item ${itemId}`);
         
-        // Send notifications for each match
-        await this.sendMatchNotifications(item, potentialMatches);
+        try {
+          // Get image features for current item
+          const currentItemFeatures = await aiService.extractImageFeatures(item.image_url);
+          if (currentItemFeatures) {
+            // Filter matches by image similarity
+            const similarityResults = await Promise.all(
+              potentialMatches.map(async (match) => {
+                const matchFeatures = await aiService.extractImageFeatures(match.image_url);
+                if (!matchFeatures) return { item: match, similarity: 0 };
+                
+                const similarity = aiService.calculateSimilarity(currentItemFeatures, matchFeatures);
+                return { item: match, similarity };
+              })
+            );
+            
+            // Sort matches by similarity (highest first) and filter out low similarity matches
+            const highConfidenceMatches = similarityResults
+              .filter(result => result.similarity > 0.6) // Threshold for similarity
+              .sort((a, b) => b.similarity - a.similarity)
+              .map(result => result.item);
+              
+            console.log(`Found ${highConfidenceMatches.length} high-confidence matches based on image similarity`);
+            
+            // Send notifications for high confidence matches
+            if (highConfidenceMatches.length > 0) {
+              await this.sendDetailedMatchNotifications(item, highConfidenceMatches);
+              return highConfidenceMatches;
+            }
+          }
+        } catch (aiError) {
+          console.error('Error during AI similarity matching:', aiError);
+          // Fall back to location-based matches if AI matching fails
+        }
+        
+        // Send notifications for all location-based matches if AI matching wasn't successful
+        await this.sendDetailedMatchNotifications(item, potentialMatches);
       }
 
       return potentialMatches;
@@ -51,8 +87,8 @@ export const matchingService = {
     }
   },
   
-  // Send notifications for matching items
-  async sendMatchNotifications(currentItem: Item, matchedItems: Item[]): Promise<void> {
+  // Send detailed notifications for matching items
+  async sendDetailedMatchNotifications(currentItem: Item, matchedItems: Item[]): Promise<void> {
     try {
       // Get current user info (we need their email)
       const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -80,11 +116,28 @@ export const matchingService = {
       // Send email to current user if they have an email
       if (user.email) {
         const emailSubject = notificationTitle;
-        const emailBody = `
+        let emailBody = `
           Hello,
           
           Good news! ${notificationMessage}
           
+          Here are the details of the potential match${matchCount > 1 ? 'es' : ''}:
+        `;
+        
+        // Add details of each match
+        matchedItems.forEach((match, index) => {
+          emailBody += `
+          Match #${index + 1}:
+          - Item: ${match.title}
+          - Category: ${match.category}
+          - Location: ${match.location}
+          - Date: ${new Date(match.date_reported).toLocaleDateString()}
+          - Description: ${match.description}
+          
+          `;
+        });
+        
+        emailBody += `
           Please log in to your account to view the potential matches and take further action.
           
           Thank you,
@@ -110,8 +163,58 @@ export const matchingService = {
             .select('email')
             .eq('id', matchedUserId)
             .single();
-          
-          if (!matchedUserError && matchedUserData) {
+            
+          if (matchedUserError) {
+            // If profiles table doesn't exist, try to get the email from auth.users
+            const { data: { user: matchedUser }, error: authError } = await supabase.auth.admin.getUserById(matchedUserId);
+            
+            if (!authError && matchedUser && matchedUser.email) {
+              // Create notification for the matched item owner
+              const matchNotificationTitle = "Item match found!";
+              const matchNotificationMessage = `Your ${matchedItem.status} item "${matchedItem.title}" may match someone's ${currentItemStatus} item "${currentItemTitle}".`;
+              
+              await notificationService.createNotification(
+                matchedUserId,
+                matchNotificationTitle,
+                matchNotificationMessage,
+                matchedItem.id
+              );
+              
+              // Send email with detailed information
+              const matchedEmailSubject = matchNotificationTitle;
+              const matchedEmailBody = `
+                Hello,
+                
+                ${matchNotificationMessage}
+                
+                Here are the details of the match:
+                
+                Your item:
+                - Item: ${matchedItem.title}
+                - Category: ${matchedItem.category}
+                - Location: ${matchedItem.location}
+                - Date: ${new Date(matchedItem.date_reported).toLocaleDateString()}
+                
+                Matched item:
+                - Item: ${currentItem.title}
+                - Category: ${currentItem.category}
+                - Location: ${currentItem.location}
+                - Date: ${new Date(currentItem.date_reported).toLocaleDateString()}
+                - Description: ${currentItem.description}
+                
+                Please log in to your account to view the potential match and take further action.
+                
+                Thank you,
+                Lost & Found Team
+              `;
+              
+              await notificationService.sendEmailNotification(
+                matchedUser.email,
+                matchedEmailSubject,
+                matchedEmailBody
+              );
+            }
+          } else if (matchedUserData && matchedUserData.email) {
             // Create notification for the matched item owner
             const matchNotificationTitle = "Item match found!";
             const matchNotificationMessage = `Your ${matchedItem.status} item "${matchedItem.title}" may match someone's ${currentItemStatus} item "${currentItemTitle}".`;
@@ -123,26 +226,39 @@ export const matchingService = {
               matchedItem.id
             );
             
-            // Send email to matched user if we have their email
-            if (matchedUserData.email) {
-              const matchedEmailSubject = matchNotificationTitle;
-              const matchedEmailBody = `
-                Hello,
-                
-                ${matchNotificationMessage}
-                
-                Please log in to your account to view the potential match and take further action.
-                
-                Thank you,
-                Lost & Found Team
-              `;
+            // Send email to matched user with more detailed information
+            const matchedEmailSubject = matchNotificationTitle;
+            const matchedEmailBody = `
+              Hello,
               
-              await notificationService.sendEmailNotification(
-                matchedUserData.email,
-                matchedEmailSubject,
-                matchedEmailBody
-              );
-            }
+              ${matchNotificationMessage}
+              
+              Here are the details of the match:
+              
+              Your item:
+              - Item: ${matchedItem.title}
+              - Category: ${matchedItem.category}
+              - Location: ${matchedItem.location}
+              - Date: ${new Date(matchedItem.date_reported).toLocaleDateString()}
+              
+              Matched item:
+              - Item: ${currentItem.title}
+              - Category: ${currentItem.category}
+              - Location: ${currentItem.location}
+              - Date: ${new Date(currentItem.date_reported).toLocaleDateString()}
+              - Description: ${currentItem.description}
+              
+              Please log in to your account to view the potential match and take further action.
+              
+              Thank you,
+              Lost & Found Team
+            `;
+            
+            await notificationService.sendEmailNotification(
+              matchedUserData.email,
+              matchedEmailSubject,
+              matchedEmailBody
+            );
           }
         }
       }

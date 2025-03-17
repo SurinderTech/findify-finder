@@ -1,11 +1,15 @@
+
 import React, { useState, useEffect } from 'react';
-import { Bell, BellDot, Check, X, Mail } from 'lucide-react';
+import { Bell, BellDot, Check, Mail, ChevronRight } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { notificationService, Notification } from '@/services/notificationService';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import ItemMatchDetails from '@/components/items/ItemMatchDetails';
 
 export function NotificationCenter() {
   const { user } = useAuth();
@@ -13,7 +17,10 @@ export function NotificationCenter() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
+  const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
+  const [matchDialogOpen, setMatchDialogOpen] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   // Fetch notifications when component mounts or user changes
   useEffect(() => {
@@ -103,6 +110,21 @@ export function NotificationCenter() {
     }
   };
 
+  const handleViewMatch = (notification: Notification) => {
+    setSelectedNotification(notification);
+    setMatchDialogOpen(true);
+    setOpen(false); // Close the notification sheet
+  };
+
+  const viewAllNotifications = () => {
+    setOpen(false);
+    navigate('/notifications');
+  };
+
+  const isMatchNotification = (notification: Notification) => {
+    return notification.title.includes('match') && notification.related_item_id;
+  };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -125,78 +147,122 @@ export function NotificationCenter() {
   };
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative" onClick={() => fetchNotifications()}>
-          {unreadCount > 0 ? (
-            <>
-              <BellDot className="h-5 w-5" />
-              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] text-white">
-                {unreadCount > 9 ? '9+' : unreadCount}
-              </span>
-            </>
-          ) : (
-            <Bell className="h-5 w-5" />
-          )}
-          <span className="sr-only">Notifications</span>
-        </Button>
-      </SheetTrigger>
-      <SheetContent className="w-full sm:max-w-md">
-        <SheetHeader className="mb-4">
-          <SheetTitle>Notifications</SheetTitle>
-        </SheetHeader>
-        
-        <div className="flex justify-end mb-4">
-          <Button variant="outline" size="sm" onClick={markAllAsRead}>
-            Mark all as read
+    <>
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetTrigger asChild>
+          <Button variant="ghost" size="icon" className="relative" onClick={() => fetchNotifications()}>
+            {unreadCount > 0 ? (
+              <>
+                <BellDot className="h-5 w-5" />
+                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] text-white">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              </>
+            ) : (
+              <Bell className="h-5 w-5" />
+            )}
+            <span className="sr-only">Notifications</span>
           </Button>
-        </div>
+        </SheetTrigger>
+        <SheetContent className="w-full sm:max-w-md">
+          <SheetHeader className="mb-4">
+            <SheetTitle>Notifications</SheetTitle>
+          </SheetHeader>
+          
+          <div className="flex justify-between mb-4">
+            <Button variant="outline" size="sm" onClick={viewAllNotifications}>
+              View All
+            </Button>
+            {unreadCount > 0 && (
+              <Button variant="outline" size="sm" onClick={markAllAsRead}>
+                Mark all as read
+              </Button>
+            )}
+          </div>
 
-        <div className="space-y-4 overflow-y-auto max-h-[calc(100vh-150px)]">
-          {loading ? (
-            <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-700"></div>
-            </div>
-          ) : notifications.length === 0 ? (
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-center py-8">
-                  <Mail className="mx-auto h-10 w-10 text-gray-400 mb-3" />
-                  <p className="text-gray-500">No notifications yet</p>
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            notifications.map((notification) => (
-              <Card 
-                key={notification.id} 
-                className={`transition-colors ${notification.is_read ? 'bg-card' : 'bg-blue-50 dark:bg-blue-900/20'}`}
-              >
-                <CardContent className="p-4">
-                  <div className="flex justify-between items-start gap-2">
-                    <div className="flex-1">
-                      <h4 className="font-medium text-sm">{notification.title}</h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{notification.message}</p>
-                      <p className="text-xs text-gray-500 mt-2">{formatDate(notification.created_at)}</p>
-                    </div>
-                    {!notification.is_read && notification.id && (
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8 shrink-0" 
-                        onClick={() => handleMarkAsRead(notification.id!)}
-                      >
-                        <Check className="h-4 w-4" />
-                        <span className="sr-only">Mark as read</span>
-                      </Button>
-                    )}
+          <div className="space-y-4 overflow-y-auto max-h-[calc(100vh-150px)]">
+            {loading ? (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-700"></div>
+              </div>
+            ) : notifications.length === 0 ? (
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-center py-8">
+                    <Mail className="mx-auto h-10 w-10 text-gray-400 mb-3" />
+                    <p className="text-gray-500">No notifications yet</p>
                   </div>
                 </CardContent>
               </Card>
-            ))
+            ) : (
+              notifications.slice(0, 10).map((notification) => (
+                <Card 
+                  key={notification.id} 
+                  className={`transition-colors ${notification.is_read ? 'bg-card' : 'bg-blue-50 dark:bg-blue-900/20'}`}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start gap-2">
+                      <div className="flex-1">
+                        <h4 className="font-medium text-sm">{notification.title}</h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{notification.message}</p>
+                        <p className="text-xs text-gray-500 mt-2">{formatDate(notification.created_at)}</p>
+                        
+                        {/* For match notifications, add view button */}
+                        {isMatchNotification(notification) && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="mt-2 text-blue-600 p-0 h-auto font-medium"
+                            onClick={() => handleViewMatch(notification)}
+                          >
+                            View match details
+                            <ChevronRight className="h-4 w-4 ml-1" />
+                          </Button>
+                        )}
+                      </div>
+                      {!notification.is_read && notification.id && (
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 shrink-0" 
+                          onClick={() => handleMarkAsRead(notification.id!)}
+                        >
+                          <Check className="h-4 w-4" />
+                          <span className="sr-only">Mark as read</span>
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+            
+            {notifications.length > 10 && (
+              <div className="text-center">
+                <Button variant="link" onClick={viewAllNotifications}>
+                  View all notifications
+                </Button>
+              </div>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
+      
+      {/* Match Details Dialog */}
+      <Dialog open={matchDialogOpen} onOpenChange={setMatchDialogOpen}>
+        <DialogContent className="sm:max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Item Match Details</DialogTitle>
+          </DialogHeader>
+          
+          {selectedNotification && selectedNotification.related_item_id && (
+            <ItemMatchDetails 
+              itemId={selectedNotification.related_item_id} 
+              matchId={selectedNotification.related_item_id} // This would be replaced with the actual match ID stored in the notification
+            />
           )}
-        </div>
-      </SheetContent>
-    </Sheet>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

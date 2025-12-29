@@ -3,9 +3,7 @@
 
 ## Project setup
 
-### Supabase setup
-
-1. Create a Supabase project at [https://supabase.com](https://supabase.com)
+### Supabase setup[https://supabase.com](https://supabase.com)
 2. When prompted, enter a project name (e.g., "lost-and-found-app")
 3. Create a strong database password (you'll need this for database access)
 4. Choose a region closest to your users

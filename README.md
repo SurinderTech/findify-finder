@@ -11,7 +11,7 @@
 4. Choose a region closest to your users
 5. Wait for your project to be created
 
-### Get your Supabase credentials
+## Get your Supabase credentials
 
 1. Once your project is created, go to your project dashboard
 2. Click on "Settings" in the sidebar

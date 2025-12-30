@@ -1,6 +1,3 @@
-
-
-
 1. Once your project is created, go to your project dashboard
 2. Click on "Settings" in the sidebar
 3. Click on "API" in the submenu

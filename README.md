@@ -1,6 +1,5 @@
 
 
-## Get your Supabase credentials
 
 1. Once your project is created, go to your project dashboard
 2. Click on "Settings" in the sidebar

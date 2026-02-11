@@ -28,5 +28,5 @@ npm run dev
 - User authentication with Supabase
 - Report lost or found items with image upload
 - Search and browse lost and found items
-- Dashboard to manage your reported items
+- Dashboard to manage 
 

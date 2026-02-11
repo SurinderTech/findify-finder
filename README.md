@@ -2,7 +2,7 @@
 2. Click on "Settings" in the sidebar
 3. Click on "API" in the submenu
 4. You'll find your "Project URL" and "anon public" key here
-5. Copy these values to use in your .env file
+
 
 ### Configure your application
 

@@ -128,3 +128,24 @@ Update config/settings.json:
 ✅ Multi-website monitoring
 
 ✅ Chrome Extension support
+
+🤝 Contributing
+
+Contributions are welcome!
+
+Fork the repository
+
+Create a feature branch
+
+Commit changes
+
+Open a Pull Request
+
+📜 License
+
+This project is licensed under the MIT License.
+
+👨‍💻 Author
+
+Surinder Kumar
+CSE Student | Python Developer | AI & Automation Builder

@@ -1,32 +1,130 @@
-1. Once your project is created, go to your project dashboard
-2. Click on "Settings" in the sidebar
-3. Click on "API" in the submenu
-4. You'll find your "Project URL" and "anon public" key here
+🔍 Findify Finder
 
+Findify Finder is a smart search and analysis system designed to automatically extract, analyze, and highlight important information from websites, emails, or online content.
+It helps users quickly identify opportunities, deadlines, announcements, and key insights without manually reading large amounts of data.
 
-### Configure your application
+🚀 Overview
 
-Update your `.env` file with the credentials from Supabase:
+Findify Finder simplifies information discovery by combining web scraping, content analysis, and AI-based summarization into one workflow.
 
-```
-VITE_SUPABASE_URL=your_project_url_from_supabase
-VITE_SUPABASE_ANON_KEY=your_anon_key_from_supabase
-```
+Instead of manually checking multiple sources, the system:
 
-## Development
+Collects content automatically
 
-```sh
+Detects important information
+
+Generates structured summaries
+
+Flags high-priority updates
+
+Perfect for students, researchers, professionals, and developers who want faster information tracking.
+
+✨ Features
+
+🔎 Smart Content Detection — Identifies important announcements automatically
+
+🧠 AI-Based Analysis — Extracts meaning instead of just keywords
+
+📄 Automatic Summarization — Converts long content into short insights
+
+⚡ Priority Classification — Marks important updates instantly
+
+🌐 Website Monitoring — Tracks academic, job, or opportunity pages
+
+📧 Email Integration Ready — Can analyze incoming messages
+
+🧩 Use Cases
+
+🎓 Track PhD / M.Tech admissions
+
+💼 Monitor job or internship opportunities
+
+📢 Detect important announcements
+
+🏫 Follow university updates automatically
+
+🔔 Build notification systems
+
+🛠️ Tech Stack
+
+Python — Core backend logic
+
+Web Scraping — Content extraction
+
+AI/LLM Integration — Text analysis & summarization
+
+JSON Processing — Structured output handling
+
+SMTP / Email Parsing — Notification processing
+
+📂 Project Structure
+Findify-Finder/
+│
+├── src/
+│   ├── scraper.py        # Website data extraction
+│   ├── analyzer.py       # AI content analysis
+│   ├── parser.py         # Data formatting & cleaning
+│   └── notifier.py       # Alerts & notifications
+│
+├── config/
+│   └── settings.json
+│
+├── outputs/
+│   └── results.json
+│
+├── requirements.txt
+└── README.md
+
+⚙️ Installation
+# Clone repository
+git clone https://github.com/yourusername/findify-finder.git
+
+# Move into project
+cd findify-finder
+
 # Install dependencies
-npm i
+pip install -r requirements.txt
 
-# Start the development server
-npm run dev
-```
+▶️ Usage
+python main.py
 
-## Features
 
-- User authentication with Supabase
-- Report lost or found items with image upload
-- Search and browse lost and found items
-- Dashboard to manage 
+The system will:
 
+Fetch content
+
+Analyze information
+
+Generate structured results
+
+Mark important updates
+
+Example Output:
+
+{
+  "important": true,
+  "summary": "Multiple opportunities and deadlines detected including PhD admissions and faculty positions.",
+  "category": "Academic Opportunities"
+}
+
+🔧 Configuration
+
+Update config/settings.json:
+
+{
+  "target_website": "https://example.com",
+  "email_enabled": true,
+  "importance_threshold": 0.8
+}
+
+📈 Future Improvements
+
+✅ Real-time notifications
+
+✅ Dashboard UI
+
+✅ Telegram/WhatsApp alerts
+
+✅ Multi-website monitoring
+
+✅ Chrome Extension support

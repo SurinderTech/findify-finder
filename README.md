@@ -1,4 +1,4 @@
-🔍 Findify Finder
+# 🔍 Findify Finder
 
 Findify Finder is a smart search and analysis system designed to automatically extract, analyze, and highlight important information from websites, emails, or online content.
 It helps users quickly identify opportunities, deadlines, announcements, and key insights without manually reading large amounts of data.

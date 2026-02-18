@@ -3,23 +3,23 @@
 Findify Finder is a smart search and analysis system designed to automatically extract, analyze, and highlight important information from websites, emails, or online content.
 It helps users quickly identify opportunities, deadlines, announcements, and key insights without manually reading large amounts of data.
 
-🚀 Overview
+# 🚀 Overview
 
 Findify Finder simplifies information discovery by combining web scraping, content analysis, and AI-based summarization into one workflow.
 
 Instead of manually checking multiple sources, the system:
 
-Collects content automatically
+### Collects content automatically
 
-Detects important information
+### Detects important information
 
-Generates structured summaries
+### Generates structured summaries
 
-Flags high-priority updates
+### Flags high-priority updates
 
 Perfect for students, researchers, professionals, and developers who want faster information tracking.
 
-✨ Features
+# ✨ Features
 
 🔎 Smart Content Detection — Identifies important announcements automatically
 
@@ -33,25 +33,25 @@ Perfect for students, researchers, professionals, and developers who want faster
 
 📧 Email Integration Ready — Can analyze incoming messages
 
-🧩 Use Cases
+# 🧩 Use Cases
 
-🎓 Track PhD / M.Tech admissions
+## 🎓 Track PhD / M.Tech admissions
 
-💼 Monitor job or internship opportunities
+## 💼 Monitor job or internship opportunities
 
-📢 Detect important announcements
+## 📢 Detect important announcements
 
-🏫 Follow university updates automatically
+## 🏫 Follow university updates automatically
 
-🔔 Build notification systems
+## 🔔 Build notification systems
 
-🛠️ Tech Stack
+## 🛠️ Tech Stack
 
-Python — Core backend logic
+## Python — Core backend logic
 
-Web Scraping — Content extraction
+## Web Scraping — Content extraction
 
-AI/LLM Integration — Text analysis & summarization
+## AI/LLM Integration — Text analysis & summarization
 
 JSON Processing — Structured output handling
 

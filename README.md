@@ -9,13 +9,13 @@ Findify Finder simplifies information discovery by combining web scraping, conte
 
 Instead of manually checking multiple sources, the system:
 
-### Collects content automatically
+#### Collects content automatically
 
-### Detects important information
+#### Detects important information
 
-### Generates structured summaries
+#### Generates structured summaries
 
-### Flags high-priority updates
+#### Flags high-priority updates
 
 Perfect for students, researchers, professionals, and developers who want faster information tracking.
 
@@ -35,28 +35,28 @@ Perfect for students, researchers, professionals, and developers who want faster
 
 # 🧩 Use Cases
 
-## 🎓 Track PhD / M.Tech admissions
+#### 🎓 Track PhD / M.Tech admissions
 
-## 💼 Monitor job or internship opportunities
+#### 💼 Monitor job or internship opportunities
 
-## 📢 Detect important announcements
+#### 📢 Detect important announcements
 
-## 🏫 Follow university updates automatically
+#### 🏫 Follow university updates automatically
 
-## 🔔 Build notification systems
+#### 🔔 Build notification systems
 
-## 🛠️ Tech Stack
+#### 🛠️ Tech Stack
 
 ## Python — Core backend logic
 
 ## Web Scraping — Content extraction
 
-## AI/LLM Integration — Text analysis & summarization
+#### AI/LLM Integration — Text analysis & summarization
 
-JSON Processing — Structured output handling
+#### JSON Processing — Structured output handling
 
-SMTP / Email Parsing — Notification processing
-
+#### SMTP / Email Parsing — Notification processing
+```
 📂 Project Structure
 Findify-Finder/
 │
@@ -74,13 +74,17 @@ Findify-Finder/
 │
 ├── requirements.txt
 └── README.md
-
-⚙️ Installation
-# Clone repository
+```
+# ⚙️ Installation
+### Clone repository
+```
 git clone https://github.com/yourusername/findify-finder.git
+```
 
 # Move into project
+```
 cd findify-finder
+```
 
 # Install dependencies
 pip install -r requirements.txt

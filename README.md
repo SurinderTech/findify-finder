@@ -45,11 +45,11 @@ Perfect for students, researchers, professionals, and developers who want faster
 
 #### 🔔 Build notification systems
 
-#### 🛠️ Tech Stack
+# 🛠️ Tech Stack
 
-## Python — Core backend logic
+#### Python — Core backend logic
 
-## Web Scraping — Content extraction
+#### Web Scraping — Content extraction
 
 #### AI/LLM Integration — Text analysis & summarization
 

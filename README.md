@@ -92,10 +92,12 @@ pip install -r requirements.txt
 ```
 
 ### ▶️ Usage
+```
 python main.py
+```
 
 
-The system will:
+## The system will:
 
 Fetch content
 
@@ -105,7 +107,7 @@ Generate structured results
 
 Mark important updates
 
-Example Output:
+##Example Output:
 
 {
   "important": true,
@@ -113,7 +115,7 @@ Example Output:
   "category": "Academic Opportunities"
 }
 
-🔧 Configuration
+#🔧 Configuration
 
 Update config/settings.json:
 
@@ -123,7 +125,7 @@ Update config/settings.json:
   "importance_threshold": 0.8
 }
 
-📈 Future Improvements
+# 📈 Future Improvements
 
 ✅ Real-time notifications
 
@@ -135,7 +137,7 @@ Update config/settings.json:
 
 ✅ Chrome Extension support
 
-🤝 Contributing
+# 🤝 Contributing
 
 Contributions are welcome!
 

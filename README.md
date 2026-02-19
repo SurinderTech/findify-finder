@@ -115,7 +115,7 @@ Mark important updates
   "category": "Academic Opportunities"
 }
 
-#🔧 Configuration
+# 🔧 Configuration
 
 Update config/settings.json:
 

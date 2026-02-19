@@ -87,9 +87,11 @@ cd findify-finder
 ```
 
 # Install dependencies
+```
 pip install -r requirements.txt
+```
 
-▶️ Usage
+# ▶️ Usage
 python main.py
 
 

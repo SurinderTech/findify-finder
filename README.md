@@ -149,11 +149,11 @@ Commit changes
 
 Open a Pull Request
 
-📜 License
+# 📜 License
 
 This project is licensed under the MIT License.
 
-👨‍💻 Author
+# 👨‍💻 Author
 
 Surinder Kumar
 CSE Student | Python Developer | AI & Automation Builder

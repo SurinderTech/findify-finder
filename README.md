@@ -81,17 +81,17 @@ Findify-Finder/
 git clone https://github.com/yourusername/findify-finder.git
 ```
 
-# Move into project
+### Move into project
 ```
 cd findify-finder
 ```
 
-# Install dependencies
+### Install dependencies
 ```
 pip install -r requirements.txt
 ```
 
-# ▶️ Usage
+### ▶️ Usage
 python main.py
 
 

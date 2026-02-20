@@ -47,15 +47,15 @@ Perfect for students, researchers, professionals, and developers who want faster
 
 # 🛠️ Tech Stack
 
-#### Python — Core backend logic
+## 🛠️ Tech Stack
 
-#### Web Scraping — Content extraction
-
-#### AI/LLM Integration — Text analysis & summarization
-
-#### JSON Processing — Structured output handling
-
-#### SMTP / Email Parsing — Notification processing
+| Technology | Purpose | Description |
+|------------|---------|-------------|
+| **Python** | Core Backend Logic | Handles main application workflow, automation, and processing logic. |
+| **Web Scraping** | Content Extraction | Collects data from websites for analysis and processing. |
+| **AI / LLM Integration** | Text Analysis & Summarization | Uses AI models to analyze content and generate intelligent summaries. |
+| **JSON Processing** | Structured Data Handling | Formats, parses, and manages structured input/output data. |
+| **SMTP / Email Parsing** | Notification Processing | Reads incoming emails and sends automated notifications or alerts. |
 ```
 📂 Project Structure
 Findify-Finder/

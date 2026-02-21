@@ -120,7 +120,7 @@ Mark important updates
 Update config/settings.json:
 
 {
-  "target_website": "https://example.com",
+  "target_website": "https:surinderTech.com",
   "email_enabled": true,
   "importance_threshold": 0.8
 }

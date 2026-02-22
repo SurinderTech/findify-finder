@@ -156,4 +156,4 @@ This project is licensed under the MIT License.
 # 👨‍💻 Author
 
 Surinder Kumar
-CSE Student | Python Developer | AI & Automation Builder
+CSE Student |  AI & Automation Builder
